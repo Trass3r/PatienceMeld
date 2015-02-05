@@ -18,7 +18,7 @@ from gi.repository import GObject
 
 from .matchers import DiffChunk, MyersSequenceMatcher, \
     SyncPointMyersSequenceMatcher
-
+from .bzrlib.patiencediff import PatienceSequenceMatcher
 
 opcode_reverse = {
     "replace": "replace",
@@ -66,7 +66,7 @@ class Differ(GObject.GObject):
                                                     (object,)),
     }
 
-    _matcher = MyersSequenceMatcher
+    _matcher = PatienceSequenceMatcher
     _sync_matcher = SyncPointMyersSequenceMatcher
 
     def __init__(self):
@@ -298,7 +298,7 @@ class Differ(GObject.GObject):
             return DiffChunk._make((c[0], c[1] + o1, c[2] + o1,
                                           c[3] + o2, c[4] + o2))
 
-        newdiffs = self._matcher(None, lines1, linesx).get_difference_opcodes()
+        newdiffs = filter(lambda x: x[0] != "equal", self._matcher(None, lines1, linesx).get_opcodes())
         newdiffs = [offset(c, range1[0], rangex[0]) for c in newdiffs]
 
         if hiidx < len(self.diffs[which]):
@@ -462,10 +462,7 @@ class Differ(GObject.GObject):
                                              syncpoints=syncpoints)
             else:
                 matcher = self._matcher(None, sequences[1], sequences[i * 2])
-            work = matcher.initialise()
-            while next(work) is None:
-                yield None
-            self.diffs[i] = matcher.get_difference_opcodes()
+            self.diffs[i] = filter(lambda x: x[0] != "equal", matcher.get_opcodes())
         self._initialised = True
         self._update_merge_cache(sequences)
         yield 1

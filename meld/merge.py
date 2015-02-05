@@ -16,11 +16,12 @@
 from . import diffutil
 from . import matchers
 
+from .bzrlib.patiencediff import PatienceSequenceMatcher
 
 class AutoMergeDiffer(diffutil.Differ):
 
-    _matcher = matchers.MyersSequenceMatcher
-   # _matcher = PatienceSequenceMatcher
+   # _matcher = matchers.MyersSequenceMatcher
+    _matcher = PatienceSequenceMatcher
 
     def __init__(self):
         diffutil.Differ.__init__(self)
